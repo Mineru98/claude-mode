@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>frontend · claude-mode</title>
+  <style>
+    :root {
+      --bg: #F4F1EC;
+      --sidebar: #EBE6DE;
+      --panel: #F7F5F1;
+      --ink: #1C1915;
+      --mute: #6F6A62;
+      --line: #DDD6CC;
+      --olive: #4F5D32;
+      --olive-soft: #E7EBD8;
+      --clay: #9B3D2A;
+      --amber: #B5812A;
+      --chip: #E7E1D6;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font: 13px/1.45 "Segoe UI", "Pretendard", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: 220px 1fr;
+    }
+    button, input { font: inherit; color: inherit; }
+    code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+    aside {
+      background: var(--sidebar);
+      border-right: 1px solid var(--line);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brand { font-weight: 650; padding: 0 8px 12px; letter-spacing: -0.02em; }
+    .pill {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--olive); font-size: 12px; padding: 0 8px 16px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--olive); }
+    nav button {
+      width: 100%; text-align: left; background: none; border: 0;
+      padding: 8px 10px; border-radius: 6px; cursor: pointer; color: var(--ink);
+    }
+    nav button:hover, nav button.active { background: #e0d9cd; }
+    nav button.active { font-weight: 600; }
+    nav .hint { float: right; color: var(--mute); font-size: 11px; }
+    .grow { flex: 1; }
+    .new {
+      background: var(--olive); color: #f7f5f1; border: 0;
+      border-radius: 6px; padding: 8px 10px; cursor: pointer; font-weight: 600;
+    }
+    main { display: flex; flex-direction: column; min-width: 0; }
+    header.bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 24px; border-bottom: 1px solid var(--line);
+    }
+    header.bar h1 { font-size: 15px; margin: 0; font-weight: 650; }
+    .search {
+      margin-left: auto; width: 280px; background: var(--panel);
+      border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+    }
+    .view { padding: 20px 24px 48px; overflow: auto; }
+    .hidden { display: none !important; }
+    .group { color: var(--mute); font-size: 11px; letter-spacing: .08em;
+      text-transform: uppercase; margin: 18px 0 6px; }
+    .row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 4px 16px; padding: 12px 10px; border-radius: 6px; cursor: pointer;
+    }
+    .row:hover { background: #ece7de; }
+    .slug { font-size: 13px; }
+    .desc { color: var(--mute); grid-column: 1; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1; }
+    .chip { background: var(--chip); border-radius: 4px; padding: 2px 7px; font-size: 11px; }
+    .meta { color: var(--mute); font-size: 12px; }
+    .badge {
+      font-size: 11px; border-radius: 4px; padding: 2px 6px;
+      background: var(--chip); color: var(--mute);
+    }
+    .badge.warn { background: #f3e4c8; color: var(--amber); }
+    .badge.err { background: #f3ddd6; color: var(--clay); }
+    .badge.lib { background: #e4ddd2; }
+    .actions { display: flex; gap: 8px; align-items: start; }
+    .ghost {
+      background: none; border: 1px solid var(--line); border-radius: 6px;
+      padding: 5px 9px; cursor: pointer;
+    }
+    .banner {
+      background: #efe6d2; border: 1px solid #e2d3b0; border-radius: 6px;
+      padding: 10px 12px; margin: 0 0 16px; display: flex; gap: 12px; align-items: center;
+    }
+    .banner.warn { background: #f6ece6; border-color: #e8cfc6; }
+    .strip {
+      position: sticky; top: 0; background: var(--bg);
+      display: flex; gap: 14px; color: var(--mute); font-size: 12px;
+      padding: 0 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+    }
+    .seg {
+      display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+    }
+    .seg button { background: none; border: 0; padding: 6px 11px; cursor: pointer; }
+    .seg button.on { background: var(--olive); color: #f7f5f1; }
+    .seg button.off { background: var(--clay); color: #f7f5f1; }
+    .seg button.inherit { background: var(--chip); }
+    .plugin {
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line);
+    }
+    .plugin small { color: var(--mute); }
+    h2.sec { font-size: 13px; margin: 28px 0 8px; }
+    pre.json {
+      background: #1C1915; color: #E7E1D6; border-radius: 6px;
+      padding: 16px; overflow: auto; font-size: 12px; line-height: 1.55;
+    }
+    .key { color: #c4b49a; }
+    .bool { color: #b7c98a; }
+    .str { color: #d4a574; }
+    .foot { color: var(--mute); font-size: 12px; padding: 8px 24px 14px; border-top: 1px solid var(--line); }
+    .locked { opacity: .72; }
+    .locknote { color: var(--amber); font-size: 12px; }
+    .server-hero { padding: 48px 0; text-align: center; }
+    .server-hero h2 { font-size: 28px; margin: 8px 0 6px; letter-spacing: -0.03em; }
+    .server-hero p { color: var(--olive); }
+    .btns { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="brand">claude-mode</div>
+    <div class="pill"><span class="dot"></span>로컬 · 127.0.0.1:8787</div>
+    <nav>
+      <button class="active" data-go="modes">모드 <span class="hint">⌘1</span></button>
+      <button data-go="machine">이 컴퓨터 <span class="hint">⌘2</span></button>
+      <button data-go="server">서버 <span class="hint">⌘3</span></button>
+    </nav>
+    <div class="grow"></div>
+    <button class="new" type="button">+ 새 모드</button>
+  </aside>
+
+  <main>
+    <header class="bar">
+      <h1 id="title">모드</h1>
+      <div class="seg" id="viewSeg" hidden>
+        <button class="on" data-pane="form">편집</button>
+        <button data-pane="json">JSON</button>
+      </div>
+      <input class="search" placeholder="검색 또는 ⌘K" />
+    </header>
+
+    <div class="view" id="modes">
+      <div class="group">기본 모드</div>
+      <div class="row" data-open="frontend">
+        <div>
+          <span class="mono slug">frontend</span>
+          <span class="badge warn">수정됨</span>
+          <div class="desc">프론트엔드 개발 · TS/React</div>
+          <div class="chips">
+            <span class="chip">typescript-lsp</span>
+            <span class="chip">frontend-design</span>
+            <span class="chip">modern-web-guidance</span>
+            <span class="chip">+3</span>
+          </div>
+          <div class="meta">플러그인 6 · 스킬 1 · MCP 차단 1 · 추가 MCP 없음</div>
+        </div>
+        <div class="actions"><button class="ghost">열기</button><button class="ghost">복제</button></div>
+      </div>
+      <div class="row" data-open="backend">
+        <div>
+          <span class="mono slug">backend</span>
+          <div class="desc">TypeScript 백엔드</div>
+          <div class="chips">
+            <span class="chip">typescript-lsp</span>
+            <span class="chip">serena</span>
+            <span class="chip">context7</span>
+            <span class="chip">+3</span>
+          </div>
+          <div class="meta">플러그인 6 · 스킬 1 · MCP 차단 1</div>
+        </div>
+        <div class="actions"><button class="ghost">열기</button><button class="ghost">복제</button></div>
+      </div>
+      <div class="row">
+        <div>
+          <span class="mono slug">default</span>
+          <div class="desc">플러그인 없음 · 전역 설정 그대로</div>
+          <div class="meta">플러그인 0 · 스킬 0 · MCP 차단 없음</div>
+        </div>
+        <div class="actions"><button class="ghost">열기</button><button class="ghost">복제</button></div>
+      </div>
+      <div class="row">
+        <div>
+          <span class="mono slug">research</span>
+          <div class="desc">연구자</div>
+          <div class="chips">
+            <span class="chip">exa</span><span class="chip">tavily</span>
+            <span class="chip">firecrawl</span><span class="chip">+2</span>
+          </div>
+          <div class="meta">플러그인 5 · 스킬 1 · MCP 차단 1</div>
+        </div>
+        <div class="actions"><button class="ghost">열기</button><button class="ghost">복제</button></div>
+      </div>
+
+      <div class="group">내 모드</div>
+      <div class="row">
+        <div>
+          <span class="mono slug">ouroboros-omc</span>
+          <span class="badge">내 모드</span>
+          <div class="desc">OMC 스킬 전부 + Ouroboros</div>
+          <div class="chips">
+            <span class="chip">oh-my-claudecode</span>
+            <span class="chip">ouroboros</span>
+            <span class="chip">frontend-design</span>
+            <span class="chip">+2</span>
+          </div>
+          <div class="meta">플러그인 5 · 스킬 0 · MCP 차단 2</div>
+        </div>
+        <div class="actions"><button class="ghost">열기</button><button class="ghost">복제</button></div>
+      </div>
+
+      <div class="group">라이브러리 — 아직 모드 목록에 없습니다</div>
+      <div class="row">
+        <div>
+          <span class="mono slug">samsara-only</span>
+          <span class="badge lib">라이브러리</span>
+          <div class="desc">SAMSARA 이슈 워크플로만</div>
+          <div class="meta">settings/custom/settings.samsara-only.json</div>
+        </div>
+        <div class="actions"><button class="ghost">모드로 쓰기</button></div>
+      </div>
+    </div>
+
+    <div class="view hidden" id="editor">
+      <div class="banner">
+        기본 모드입니다. <code>claude --mode-update</code>가 이 파일을 덮거나, 변경이 있으면 업데이트를 멈춥니다.
+        <button class="ghost" type="button">내 모드로 복제</button>
+      </div>
+      <div class="strip">
+        <span>플러그인 <b>6</b> 켬 · 후보 4</span>
+        <span>스킬 1</span>
+        <span>MCP 차단 1</span>
+        <span>커넥터 끔</span>
+        <span style="margin-left:auto">저장됨 · 방금</span>
+      </div>
+
+      <div id="formPane">
+        <h2 class="sec">플러그인</h2>
+        <div class="plugin" data-key="typescript-lsp@claude-plugins-official">
+          <div><b>typescript-lsp</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>frontend-design</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>modern-web-guidance</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>chrome-devtools-mcp</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>context7</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>commit-commands</b><br /><small>@claude-plugins-official</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>mattpocock-skills</b><br /><small>@claude-plugins-official · 후보</small></div>
+          <div class="seg" data-state="off"><button>켜기</button><button class="off">끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>playwright</b><br /><small>@claude-plugins-official · 후보</small></div>
+          <div class="seg" data-state="off"><button>켜기</button><button class="off">끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>figma</b><br /><small>@claude-plugins-official · 후보</small></div>
+          <div class="seg" data-state="off"><button>켜기</button><button class="off">끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin">
+          <div><b>ui-ux-pro-max</b><br /><small>@ui-ux-pro-max-skill · 후보</small></div>
+          <div class="seg" data-state="off"><button>켜기</button><button class="off">끄기</button><button>빼기</button></div>
+        </div>
+        <p class="meta">켜진 플러그인이 6개입니다. 4–6개를 권장합니다.</p>
+        <button class="ghost" type="button">플러그인 추가</button>
+
+        <h2 class="sec">스킬</h2>
+        <div class="plugin">
+          <div><b>make-interfaces-feel-better</b><br /><small>사용자 스킬</small></div>
+          <div class="seg" data-state="on"><button class="on">켜기</button><button>끄기</button><button>빼기</button></div>
+        </div>
+        <div class="plugin locked">
+          <div>
+            <b>frontend-design 스킬들</b><br />
+            <small>플러그인 스킬 · 잠김</small>
+            <div class="locknote">플러그인을 꺼야 꺼집니다.</div>
+          </div>
+          <div class="seg"><button disabled>켜기</button><button disabled>끄기</button><button disabled>빼기</button></div>
+        </div>
+        <p class="meta">이 컴퓨터에서 off · 모드가 이김</p>
+
+        <h2 class="sec">MCP 차단</h2>
+        <div class="banner warn">
+          파일에는 <code>n8n</code>으로 적혀 있습니다. 이 컴퓨터의 실제 이름은 <code>n8n-dev</code>, <code>n8n-prod</code>입니다.
+          <button class="ghost" type="button">이름으로 고치기</button>
+        </div>
+        <label class="plugin"><div>n8n-dev</div><input type="checkbox" /></label>
+        <label class="plugin"><div>n8n-prod</div><input type="checkbox" /></label>
+        <label class="plugin"><div>mermaid-validator</div><input type="checkbox" /></label>
+        <p class="meta">이 모드에 추가 MCP 없음 · mcp.frontend.json 만들기</p>
+
+        <h2 class="sec">기타</h2>
+        <div class="plugin">
+          <div>Claude.ai 커넥터 끄기</div>
+          <input type="checkbox" checked />
+        </div>
+      </div>
+
+      <pre class="json hidden" id="jsonPane"><span class="key">"$schema"</span>: <span class="str">"https://www.schemastore.org/claude-code-settings.json"</span>,
+<span class="key">"disableClaudeAiConnectors"</span>: <span class="bool">true</span>,
+<span class="key">"enabledPlugins"</span>: {
+  <span class="key">"typescript-lsp@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"frontend-design@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"modern-web-guidance@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"chrome-devtools-mcp@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"context7@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"commit-commands@claude-plugins-official"</span>: <span class="bool">true</span>,
+  <span class="key">"mattpocock-skills@claude-plugins-official"</span>: <span class="bool">false</span>,
+  <span class="key">"playwright@claude-plugins-official"</span>: <span class="bool">false</span>,
+  <span class="key">"figma@claude-plugins-official"</span>: <span class="bool">false</span>,
+  <span class="key">"ui-ux-pro-max@ui-ux-pro-max-skill"</span>: <span class="bool">false</span>
+},
+<span class="key">"skillOverrides"</span>: {
+  <span class="key">"make-interfaces-feel-better"</span>: <span class="str">"on"</span>
+},
+<span class="key">"deniedMcpServers"</span>: [
+  { <span class="key">"serverName"</span>: <span class="str">"n8n"</span> }
+]</pre>
+    </div>
+
+    <div class="view hidden" id="machine">
+      <p class="meta">읽기 전용. 전역 파일은 GUI에서 고치지 않습니다.</p>
+      <h2 class="sec">플러그인 · ~/.claude/plugins</h2>
+      <div class="meta">typescript-lsp, frontend-design, chrome-devtools-mcp, context7, oh-my-claudecode@omc …</div>
+      <h2 class="sec">사용자 스킬 · ~/.claude/skills</h2>
+      <div class="meta">OMC npm 설치본 41개. skillOverrides가 먹히는 대상입니다.</div>
+      <h2 class="sec">MCP · ~/.claude.json</h2>
+      <div class="chips" style="margin-top:8px">
+        <span class="chip">n8n-dev</span>
+        <span class="chip">n8n-prod</span>
+        <span class="chip">mermaid-validator</span>
+      </div>
+      <h2 class="sec">settings.local.json</h2>
+      <div class="meta">skillOverrides는 모드와 합쳐지고, 같은 키는 모드가 이깁니다.</div>
+    </div>
+
+    <div class="view hidden" id="server">
+      <div class="server-hero">
+        <div class="dot" style="width:14px;height:14px;margin:0 auto"></div>
+        <h2 class="mono">127.0.0.1:8787</h2>
+        <p>실행 중 · bind localhost only · 비밀번호 없음</p>
+        <div class="btns">
+          <button class="ghost">서버 중지</button>
+          <button class="ghost">재시작</button>
+        </div>
+        <p class="meta" style="margin-top:28px">이 서버는 이 컴퓨터에서만 열립니다. 비밀번호는 없습니다.</p>
+      </div>
+    </div>
+
+    <div class="foot" id="foot">~/.claude-mode/settings · 클릭하면 파일이 아니라 폼이 열립니다</div>
+  </main>
+
+  <script>
+    const title = document.getElementById("title");
+    const viewSeg = document.getElementById("viewSeg");
+    const views = {
+      modes: document.getElementById("modes"),
+      editor: document.getElementById("editor"),
+      machine: document.getElementById("machine"),
+      server: document.getElementById("server"),
+    };
+    function show(name, heading) {
+      Object.values(views).forEach((el) => el.classList.add("hidden"));
+      views[name].classList.remove("hidden");
+      title.textContent = heading;
+      viewSeg.hidden = name !== "editor";
+      document.getElementById("foot").textContent = {
+        modes: "~/.claude-mode/settings · 기본 / 내 모드 / 라이브러리",
+        editor: "settings/settings.frontend.json · 저장됨 · 방금",
+        machine: "~/.claude 는 읽기 전용",
+        server: "claude --mode-gui start|stop|restart|open",
+      }[name];
+    }
+    document.querySelectorAll("nav button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const go = btn.dataset.go;
+        show(go, { modes: "모드", machine: "이 컴퓨터", server: "서버" }[go]);
+      });
+    });
+    document.querySelectorAll("[data-open]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
+        show("editor", row.dataset.open + " · claude-mode");
+      });
+    });
+    document.querySelectorAll(".row .ghost").forEach((btn) => {
+      if (btn.textContent.trim() === "열기") {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const row = btn.closest(".row");
+          show("editor", (row.dataset.open || "mode") + " · claude-mode");
+        });
+      }
+    });
+    document.querySelectorAll("#viewSeg button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#viewSeg button").forEach((b) => b.classList.remove("on"));
+        btn.classList.add("on");
+        const json = btn.dataset.pane === "json";
+        document.getElementById("formPane").classList.toggle("hidden", json);
+        document.getElementById("jsonPane").classList.toggle("hidden", !json);
+      });
+    });
+    document.querySelectorAll(".plugin .seg").forEach((seg) => {
+      seg.querySelectorAll("button").forEach((btn, i) => {
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          seg.querySelectorAll("button").forEach((b) => b.className = "");
+          btn.className = ["on", "off", "inherit"][i];
+        });
+      });
+    });
+  </script>
+</body>
+</html>
