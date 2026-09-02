@@ -235,7 +235,7 @@ MCP 서버를 어디에 어떻게 붙일지는 `~/.claude.json`에 적혀 있습
 
 ```json
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "$schema": "https://www.schemastore.org/claude-code-settings.json",
   "enabledPlugins": {},
   "skillOverrides": {}
 }
