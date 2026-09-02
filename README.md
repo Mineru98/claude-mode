@@ -131,9 +131,11 @@ claude --mode=ui                     등호 형태
 cc --mode slide                      claude와 동일
 claude --mode-help                   래퍼 사용법
 claude --mode-version                래퍼 버전과 설치 정보
+claude --mode-update                 최신 릴리스로 업데이트
+claude --mode-update --check         비교만
 ```
 
-`--mode`, `--mode-help`, `--mode-version`은 래퍼가 직접 처리하고 Claude Code로 넘기지 않습니다. 나머지 옵션은 그대로 Claude Code로 넘어갑니다. `--mode`가 없으면 아무것도 손대지 않고 원래 `claude` 명령을 그대로 실행합니다.
+`--mode`, `--mode-help`, `--mode-version`, `--mode-update`는 래퍼가 직접 처리하고 Claude Code로 넘기지 않습니다. 나머지 옵션은 그대로 Claude Code로 넘어갑니다. `--mode`가 없으면 아무것도 손대지 않고 원래 `claude` 명령을 그대로 실행합니다.
 
 명령에 `--settings`를 이미 직접 붙였으면 모드 파일은 건너뜁니다. `settings/mcp.<name>.json`이 있으면 `--mcp-config`로 함께 붙이고, `--mcp-config`도 직접 붙였으면 마찬가지로 건너뜁니다.
 
@@ -156,13 +158,38 @@ claude-mode 0.1.0 (main @ f897bc7, 2026-09-02)
 
 `claude --mode-help`는 `share/usage.txt`를 그대로 보여줍니다. bash와 zsh가 같은 파일을 읽어서 두 쪽 문구가 갈라지지 않습니다.
 
-이 두 플래그는 **첫 인자로 올 때만** 래퍼가 처리합니다. 뒤쪽 인자까지 훑으면 `claude -p --mode-version`처럼 다른 옵션의 값으로 온 문자열까지 가로채게 되기 때문입니다. 단독으로 쓰는 정보성 플래그라 이걸로 충분합니다.
+이 플래그들은 **첫 인자로 올 때만** 래퍼가 처리합니다. 뒤쪽 인자까지 훑으면 `claude -p --mode-version`처럼 다른 옵션의 값으로 온 문자열까지 가로채게 되기 때문입니다. 단독으로 쓰는 정보성 플래그라 이걸로 충분합니다.
 
 ```bash
 claude --mode-version      # 래퍼가 처리
 claude -p --mode-version   # -p 의 값으로 Claude Code에 그대로 전달
 claude -- --mode-version   # 마찬가지로 그대로 전달
 ```
+
+### 업데이트
+
+```bash
+claude --mode-update
+```
+
+```text
+claude-mode 0.1.0 → 0.2.0
+==> 업데이트: /Users/you/.claude-mode
+업데이트 완료. 새 터미널을 열거나 다음을 실행하세요:
+  source /Users/you/.claude-mode/claude-mode.zsh
+```
+
+GitHub의 최신 릴리스 태그를 보고 지금 버전과 비교합니다. 릴리스를 못 읽으면 `main`의 `VERSION` 파일로 떨어집니다. 같으면 `이미 최신입니다`만 찍고 아무것도 하지 않습니다.
+
+다르면 그 버전 태그로 `install.sh`를 다시 돌립니다. 설치할 때와 같은 경로(`CLAUDE_MODE_HOME`)를 그대로 씁니다. 셸 함수는 이미 메모리에 올라와 있으므로, 끝난 뒤 새 터미널을 열거나 안내대로 다시 `source` 해야 새 버전이 적용됩니다.
+
+비교만 하고 싶으면 `--check`를 붙입니다.
+
+```bash
+claude --mode-update --check
+```
+
+설치 경로가 `.git`이 있는 저장소이고 커밋하지 않은 변경이 남아 있으면 업데이트를 멈춥니다. `install.sh`가 `git reset --hard`나 `rm -rf`로 덮어쓰기 때문에, 직접 고쳐 쓰던 내용이 그대로 날아갑니다.
 
 ## 모드 파일이 하는 일
 
