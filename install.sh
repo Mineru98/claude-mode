@@ -80,11 +80,19 @@ fi
 
 # ---------------------------------------------------------------- 저장소 받기
 
+# REF 는 branch 일 수도 tag 일 수도 있다. tag 를 먼저 보고 없으면 branch 로 떨어진다.
 fetch_tarball() {
   _tmp="$(mktemp -d)" || die 'mktemp 실패'
-  _url="https://codeload.github.com/${SLUG}/tar.gz/refs/heads/${REF}"
-  curl -fsSL "$_url" | tar -xzf - -C "$_tmp" \
-    || { rm -rf "$_tmp"; die "다운로드 실패: $_url"; }
+  _ok=0
+  for _kind in tags heads; do
+    _url="https://codeload.github.com/${SLUG}/tar.gz/refs/${_kind}/${REF}"
+    if curl -fsSL "$_url" 2>/dev/null | tar -xzf - -C "$_tmp" 2>/dev/null; then
+      _ok=1
+      break
+    fi
+    rm -rf "${_tmp:?}"/* 2>/dev/null || true
+  done
+  [ "$_ok" -eq 1 ] || { rm -rf "$_tmp"; die "다운로드 실패: ${SLUG} (${REF})"; }
   _src="$(find "$_tmp" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
   [ -n "$_src" ] || { rm -rf "$_tmp"; die '압축 해제 결과가 비어 있습니다.'; }
   rm -rf "$DEST"
