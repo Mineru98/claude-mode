@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "disableClaudeAiConnectors": true,
+  "enabledPlugins": {
+    "learn-with-coursera@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "math-olympiad@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": false,
+    "huggingface-skills@claude-plugins-official": false
+  },
+  "skillOverrides": {
+    "make-interfaces-feel-better": "off"
+  },
+  "deniedMcpServers": [
+    {
+      "serverName": "n8n"
+    }
+  ]
+}

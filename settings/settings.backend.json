@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "disableClaudeAiConnectors": true,
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true,
+    "serena@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "prisma@claude-plugins-official": true,
+    "postman@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "supabase@claude-plugins-official": false,
+    "mongodb@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": false,
+    "sentry@claude-plugins-official": false
+  },
+  "skillOverrides": {
+    "make-interfaces-feel-better": "off"
+  },
+  "deniedMcpServers": [
+    {
+      "serverName": "n8n"
+    }
+  ]
+}

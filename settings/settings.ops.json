@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "disableClaudeAiConnectors": true,
+  "enabledPlugins": {
+    "github@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true,
+    "sentry@claude-plugins-official": true,
+    "postman@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "netlify-skills@claude-plugins-official": false,
+    "terraform@claude-plugins-official": false,
+    "datadog@claude-plugins-official": false
+  },
+  "skillOverrides": {
+    "make-interfaces-feel-better": "off"
+  },
+  "deniedMcpServers": [
+    {
+      "serverName": "n8n"
+    }
+  ]
+}

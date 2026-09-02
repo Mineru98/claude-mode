@@ -1,9 +1,10 @@
 #!/usr/bin/env zsh
 # Claude Code --mode wrapper — claude --mode <name>
+# source 전용. zshrc 넣는 법은 README.md 를 본다.
 #
-# ~/.zshrc:
-#   [ -f ~/Documents/scripts/zsh/claude-mode/claude-mode.zsh ] && \
-#     source ~/Documents/scripts/zsh/claude-mode/claude-mode.zsh
+# ~/.zshrc (oh-my-zsh 보다 뒤, CLAUDE_MODE_HOME 은 clone 경로):
+#   CLAUDE_MODE_HOME="$HOME/claude-mode"
+#   [ -f "$CLAUDE_MODE_HOME/claude-mode.zsh" ] && source "$CLAUDE_MODE_HOME/claude-mode.zsh"
 #
 # claude --mode                        List wrapper modes (settings/settings.<name>.json)
 # claude --mode default|research|...   Load that mode via claude --settings
