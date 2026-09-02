@@ -218,7 +218,7 @@ MCP 서버를 어디에 어떻게 붙일지는 `~/.claude.json`에 적혀 있습
 | `default` | 기본값 (플러그인 지정 없음) | — |
 | `frontend` | TypeScript + React 프론트엔드 개발자 | typescript-lsp, frontend-design, modern-web-guidance, chrome-devtools-mcp, context7, commit-commands |
 | `ml` | ML / 모델 엔지니어 | pyright-lsp, huggingface-skills, mlflow, duckdb-skills, context7 |
-| `n8n` | n8n 워크플로 작업 | ui-ux-pro-max |
+| `n8n` | n8n 워크플로 작업 | 없음 |
 | `ops` | 배포 / 운영 | github, vercel, sentry, postman, commit-commands |
 | `research` | 연구자 | exa, tavily, firecrawl, context7, notion |
 | `review` | 코드 리뷰어 | code-review, pr-review-toolkit, code-simplifier, security-guidance, github |
