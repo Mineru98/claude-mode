@@ -11,6 +11,7 @@
 # claude --mode default|research|...   Load that mode via claude --settings
 # claude --mode-version                Print claude-mode version / install info
 # claude --mode-help                   Print wrapper usage
+# claude --mode-update [--check]       Compare with latest release, update in place
 
 _CLAUDE_MODE_HOME="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 
@@ -30,14 +31,80 @@ _cc_install_info() {
   printf '%s\n' "${line#*=}"
 }
 
-_cc_print_version() {
-  local ver='' ref='' commit='' date='' origin='' detail=''
-
-  # `< file` 가 먼저 평가되므로 2>/dev/null 을 뒤에 두면 늦는다. 아예 있는지 보고 연다.
+_cc_local_version() {
+  local ver=''
   if [ -f "${_CLAUDE_MODE_HOME}/VERSION" ]; then
     ver="$(tr -d '\n\r ' < "${_CLAUDE_MODE_HOME}/VERSION" 2>/dev/null)"
   fi
   [ -n "$ver" ] || ver='unknown'
+  printf '%s\n' "$ver"
+}
+
+_cc_slug() {
+  printf '%s\n' "${CLAUDE_MODE_SLUG:-Mineru98/claude-mode}"
+}
+
+# stdout: 최신 버전(앞의 v 를 뗀 것). 릴리스 태그를 먼저 보고, 없으면 main 의 VERSION.
+_cc_latest_version() {
+  local slug tag
+  slug="$(_cc_slug)"
+  command -v curl >/dev/null 2>&1 || return 1
+  tag="$(curl -fsSL "https://api.github.com/repos/${slug}/releases/latest" 2>/dev/null \
+    | jq -r '.tag_name // empty' 2>/dev/null)"
+  if [ -z "$tag" ]; then
+    tag="$(curl -fsSL "https://raw.githubusercontent.com/${slug}/main/VERSION" 2>/dev/null \
+      | tr -d '\n\r ')"
+  fi
+  [ -n "$tag" ] || return 1
+  printf '%s\n' "${tag#v}"
+}
+
+_cc_update() {
+  local check_only=0 cur latest slug home
+
+  case "${1-}" in
+    --check) check_only=1 ;;
+    '') ;;
+    *) printf '%s\n' "cc --mode-update: 모르는 옵션: ${1}" >&2; return 1 ;;
+  esac
+
+  home="$_CLAUDE_MODE_HOME"
+  slug="$(_cc_slug)"
+  cur="$(_cc_local_version)"
+
+  latest="$(_cc_latest_version)" || {
+    printf '%s\n' 'cc --mode-update: 최신 버전을 확인하지 못했습니다 (curl / 네트워크 확인)' >&2
+    return 1
+  }
+
+  if [ "$cur" = "$latest" ]; then
+    printf '%s\n' "claude-mode ${cur} — 이미 최신입니다"
+    return 0
+  fi
+
+  printf '%s\n' "claude-mode ${cur} → ${latest}"
+  [ "$check_only" -eq 1 ] && return 0
+
+  # 설치 스크립트는 git reset --hard / rm -rf 로 덮어쓴다. 개발 중인 체크아웃이면 멈춘다.
+  if [ -d "$home/.git" ] && command -v git >/dev/null 2>&1 \
+     && [ -n "$(git -C "$home" status --porcelain 2>/dev/null)" ]; then
+    printf '%s\n' "cc --mode-update: ${home} 에 커밋 안 한 변경이 있어 멈춥니다" >&2
+    printf '%s\n' '  정리하거나 커밋한 뒤 다시 실행하세요.' >&2
+    return 1
+  fi
+
+  curl -fsSL "https://raw.githubusercontent.com/${slug}/main/install.sh" \
+    | CLAUDE_MODE_HOME="$home" CLAUDE_MODE_REF="v${latest}" sh || return 1
+
+  printf '%s\n' "업데이트 완료. 새 터미널을 열거나 다음을 실행하세요:"
+  printf '%s\n' "  source ${home}/claude-mode.bash"
+  return 0
+}
+
+_cc_print_version() {
+  local ver='' ref='' commit='' date='' origin='' detail=''
+
+  ver="$(_cc_local_version)"
 
   if [ -d "${_CLAUDE_MODE_HOME}/.git" ] && command -v git >/dev/null 2>&1; then
     commit="$(git -C "$_CLAUDE_MODE_HOME" rev-parse --short HEAD 2>/dev/null)"
@@ -239,6 +306,7 @@ cc() {
   case "${1-}" in
     --mode-version) _cc_print_version; return ;;
     --mode-help)    _cc_print_help;    return ;;
+    --mode-update)  shift; _cc_update "$@"; return ;;
   esac
 
   _cc_extract_mode "$@" || return

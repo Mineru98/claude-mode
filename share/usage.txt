@@ -5,8 +5,10 @@
                                settings/mcp.<name>.json 이 있으면 --mcp-config 로 함께 넘깁니다
   claude --mode-version        claude-mode 버전과 설치 정보를 봅니다
   claude --mode-help           이 도움말을 봅니다
+  claude --mode-update         최신 릴리스와 비교해 다르면 그 자리에서 업데이트합니다
+  claude --mode-update --check 비교만 하고 업데이트는 하지 않습니다
 
-  --mode-version 과 --mode-help 는 첫 인자로 올 때만 래퍼가 처리합니다.
+  --mode-version, --mode-help, --mode-update 는 첫 인자로 올 때만 래퍼가 처리합니다.
   --mode 를 뺀 나머지 인자는 그대로 claude 에게 전달됩니다.
   claude 자체 도움말은 claude --help, 버전은 claude --version 입니다.
 
