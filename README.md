@@ -13,6 +13,17 @@ Claude Code를 감싸서 `claude --mode <name>`을 쓸 수 있게 만드는 셸 
 | zsh | `claude-mode.zsh` |
 | bash | `claude-mode.bash` |
 
+## 지원 플랫폼
+
+| 플랫폼 | 지원 | 비고 |
+|--------|------|------|
+| macOS | ✅ 지원 | Intel / Apple Silicon |
+| Linux | ✅ 지원 | apt / dnf / pacman 계열에서 의존성 설치 안내 |
+| WSL (WSL2 포함) | ✅ 지원 | 리눅스와 동일하게 동작 |
+| Windows (PowerShell / CMD) | 🚧 지원 예정 | 아직 동작하지 않습니다 |
+
+bash / zsh 함수로 만들어져 있어서 PowerShell과 CMD에서는 쓸 수 없습니다. Windows에서는 WSL 안에서 설치해 주세요. PowerShell 지원은 준비 중입니다.
+
 ## 설치 방법
 
 ```bash
