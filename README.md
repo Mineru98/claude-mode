@@ -48,6 +48,7 @@ curl -fsSL .../install.sh | CLAUDE_MODE_SHELL=both sh
 | `CLAUDE_MODE_SHELL` | `auto` | rc 파일을 고칠 셸: `auto` / `bash` / `zsh` / `both` / `none` |
 | `CLAUDE_MODE_REF` | `main` | 받을 branch / tag |
 | `CLAUDE_MODE_REPO` | GitHub 저장소 | 다른 fork를 쓸 때 |
+| `CLAUDE_MODE_SLUG` | `Mineru98/claude-mode` | tarball과 버전 확인에 쓰는 `owner/repo` |
 
 `auto`는 지금 쓰는 셸(`$SHELL`)을 먼저 봅니다. 다른 셸의 rc 파일이 이미 있으면 거기도 같이 넣습니다. macOS에서 `~/.bash_profile`이 `~/.bashrc`를 안 읽고 있으면 `~/.bash_profile`에도 넣습니다.
 
@@ -189,7 +190,9 @@ GitHub의 최신 릴리스 태그를 보고 지금 버전과 비교합니다. �
 claude --mode-update --check
 ```
 
-설치 경로가 `.git`이 있는 저장소이고 커밋하지 않은 변경이 남아 있으면 업데이트를 멈춥니다. `install.sh`가 `git reset --hard`나 `rm -rf`로 덮어쓰기 때문에, 직접 고쳐 쓰던 내용이 그대로 날아갑니다.
+로컬 버전이 최신 릴리스보다 앞서 있으면 아무것도 하지 않습니다. 직접 빌드해 쓰던 것이 조용히 되돌아가지 않게 하기 위해서입니다.
+
+설치 경로가 git 저장소이고 커밋하지 않은 변경이나 추적되지 않는 파일이 남아 있으면 업데이트를 멈춥니다. `install.sh`가 `git reset --hard`나 `rm -rf`로 덮어쓰기 때문에, 직접 고쳐 쓰던 내용이 그대로 날아갑니다. `git worktree`로 연결한 경로도 같이 잡습니다.
 
 ## 모드 파일이 하는 일
 

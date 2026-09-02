@@ -59,14 +59,34 @@ _cc_latest_version() {
   printf '%s\n' "${tag#v}"
 }
 
+# $1 < $2 이면 0. 점으로 나눈 숫자 비교. unknown 은 항상 뒤로 본다.
+_cc_ver_lt() {
+  [ "$1" = "$2" ] && return 1
+  [ "$1" = "unknown" ] && return 0
+  [ "$2" = "unknown" ] && return 1
+  awk -v a="$1" -v b="$2" 'BEGIN {
+    n = split(a, x, "."); m = split(b, y, ".")
+    k = (n > m ? n : m)
+    for (i = 1; i <= k; i++) {
+      ai = (i <= n ? x[i] + 0 : 0); bi = (i <= m ? y[i] + 0 : 0)
+      if (ai < bi) exit 0
+      if (ai > bi) exit 1
+    }
+    exit 1
+  }'
+}
+
 _cc_update() {
-  local check_only=0 cur latest slug home
+  local check_only=0 cur latest slug home tmp
 
   case "${1-}" in
-    --check) check_only=1 ;;
-    '') ;;
-    *) printf '%s\n' "cc --mode-update: 모르는 옵션: ${1}" >&2; return 1 ;;
+    --check) check_only=1; shift ;;
+    -*) printf '%s\n' "cc --mode-update: 모르는 옵션: ${1}" >&2; return 1 ;;
   esac
+  if [ "$#" -gt 0 ]; then
+    printf '%s\n' "cc --mode-update: 남는 인자: $*" >&2
+    return 1
+  fi
 
   home="$_CLAUDE_MODE_HOME"
   slug="$(_cc_slug)"
@@ -82,21 +102,40 @@ _cc_update() {
     return 0
   fi
 
+  if ! _cc_ver_lt "$cur" "$latest"; then
+    printf '%s\n' "claude-mode ${cur} — 최신 릴리스(${latest})보다 앞서 있어 그대로 둡니다"
+    return 0
+  fi
+
   printf '%s\n' "claude-mode ${cur} → ${latest}"
   [ "$check_only" -eq 1 ] && return 0
 
-  # 설치 스크립트는 git reset --hard / rm -rf 로 덮어쓴다. 개발 중인 체크아웃이면 멈춘다.
-  if [ -d "$home/.git" ] && command -v git >/dev/null 2>&1 \
+  # 설치 스크립트는 git reset --hard / rm -rf 로 덮어쓴다. 작업 중인 체크아웃이면 멈춘다.
+  # linked worktree 는 .git 이 파일이라 -d 로는 못 잡는다. git 에게 직접 묻는다.
+  if command -v git >/dev/null 2>&1 \
+     && git -C "$home" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
      && [ -n "$(git -C "$home" status --porcelain 2>/dev/null)" ]; then
     printf '%s\n' "cc --mode-update: ${home} 에 커밋 안 한 변경이 있어 멈춥니다" >&2
     printf '%s\n' '  정리하거나 커밋한 뒤 다시 실행하세요.' >&2
     return 1
   fi
 
-  curl -fsSL "https://raw.githubusercontent.com/${slug}/main/install.sh" \
-    | CLAUDE_MODE_HOME="$home" CLAUDE_MODE_REF="v${latest}" sh || return 1
+  # curl 을 sh 에 바로 물리면 curl 이 실패해도 sh 가 빈 입력으로 0 을 준다.
+  # 아무것도 설치 안 하고 "완료" 라고 말하게 되므로 파일로 받아 확인한다.
+  tmp="$(mktemp "${TMPDIR:-/tmp}/claude-mode-install.XXXXXX")" || return 1
+  if ! curl -fsSL -o "$tmp" "https://raw.githubusercontent.com/${slug}/main/install.sh"; then
+    rm -f "$tmp"
+    printf '%s\n' 'cc --mode-update: install.sh 를 받지 못했습니다' >&2
+    return 1
+  fi
+  if ! CLAUDE_MODE_HOME="$home" CLAUDE_MODE_SLUG="$slug" CLAUDE_MODE_REF="v${latest}" sh "$tmp"; then
+    rm -f "$tmp"
+    printf '%s\n' 'cc --mode-update: 업데이트에 실패했습니다' >&2
+    return 1
+  fi
+  rm -f "$tmp"
 
-  printf '%s\n' "업데이트 완료. 새 터미널을 열거나 다음을 실행하세요:"
+  printf '%s\n' '업데이트 완료. 새 터미널을 열거나 다음을 실행하세요:'
   printf '%s\n' "  source ${home}/claude-mode.bash"
   return 0
 }

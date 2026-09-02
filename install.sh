@@ -6,12 +6,13 @@
 # 환경변수
 #   CLAUDE_MODE_HOME   설치 경로 (기본 ~/.claude-mode)
 #   CLAUDE_MODE_REPO   저장소 URL
+#   CLAUDE_MODE_SLUG   owner/repo (tarball / raw URL 에 쓴다)
 #   CLAUDE_MODE_REF    branch / tag (기본 main)
 #   CLAUDE_MODE_SHELL  rc 를 건드릴 셸: auto | bash | zsh | both | none (기본 auto)
 
 set -eu
 
-SLUG="Mineru98/claude-mode"
+SLUG="${CLAUDE_MODE_SLUG:-Mineru98/claude-mode}"
 REPO="${CLAUDE_MODE_REPO:-https://github.com/${SLUG}.git}"
 REF="${CLAUDE_MODE_REF:-main}"
 DEST="${CLAUDE_MODE_HOME:-${HOME}/.claude-mode}"
@@ -81,19 +82,26 @@ fi
 # ---------------------------------------------------------------- 저장소 받기
 
 # REF 는 branch 일 수도 tag 일 수도 있다. tag 를 먼저 보고 없으면 branch 로 떨어진다.
+# curl 을 tar 에 바로 물리면 파이프라인 상태가 tar 것이라 curl 실패가 묻힌다.
+# (bsdtar 는 빈 입력에도 0 을 준다.) 그래서 파일로 먼저 받고 확인한 뒤 푼다.
 fetch_tarball() {
   _tmp="$(mktemp -d)" || die 'mktemp 실패'
+  _tgz="${_tmp}/src.tar.gz"
   _ok=0
   for _kind in tags heads; do
     _url="https://codeload.github.com/${SLUG}/tar.gz/refs/${_kind}/${REF}"
-    if curl -fsSL "$_url" 2>/dev/null | tar -xzf - -C "$_tmp" 2>/dev/null; then
+    if curl -fsSL -o "$_tgz" "$_url" 2>/dev/null; then
       _ok=1
       break
     fi
-    rm -rf "${_tmp:?}"/* 2>/dev/null || true
   done
   [ "$_ok" -eq 1 ] || { rm -rf "$_tmp"; die "다운로드 실패: ${SLUG} (${REF})"; }
-  _src="$(find "$_tmp" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+
+  _ex="${_tmp}/x"
+  mkdir -p "$_ex" || { rm -rf "$_tmp"; die 'mkdir 실패'; }
+  tar -xzf "$_tgz" -C "$_ex" || { rm -rf "$_tmp"; die "압축 해제 실패: $_url"; }
+
+  _src="$(find "$_ex" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
   [ -n "$_src" ] || { rm -rf "$_tmp"; die '압축 해제 결과가 비어 있습니다.'; }
   rm -rf "$DEST"
   mkdir -p "$(dirname "$DEST")"
@@ -101,7 +109,15 @@ fetch_tarball() {
   rm -rf "$_tmp"
 }
 
-if [ -d "$DEST/.git" ] && have git; then
+# linked worktree 는 .git 이 디렉터리가 아니라 파일이다. -d 로만 보면 아래 clone
+# 분기로 떨어져 rm -rf 로 통째로 날린다. git 에게 직접 묻는다.
+is_git_worktree() {
+  have git || return 1
+  [ -e "$1/.git" ] || return 1
+  git -C "$1" rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
+if is_git_worktree "$DEST"; then
   say "업데이트: $DEST"
   git -C "$DEST" fetch --depth 1 origin "$REF" >/dev/null 2>&1 \
     || die "git fetch 실패: $REPO ($REF)"
@@ -128,7 +144,7 @@ fi
 write_install_info() {
   _commit='-'
   _method='tarball'
-  if [ -d "$DEST/.git" ] && have git; then
+  if is_git_worktree "$DEST"; then
     _commit="$(git -C "$DEST" rev-parse --short HEAD 2>/dev/null || echo -)"
     _method='git'
   fi
