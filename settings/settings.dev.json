@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "disableClaudeAiConnectors": true,
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "frontend-slides@frontend-slides": false,
+    "greptile@claude-plugins-official": false,
+    "humanize-korean@im-not-ai": false,
+    "oh-my-claudecode@omc": false,
+    "ouroboros@ouroboros": true,
+    "ralph-loop@claude-plugins-official": false,
+    "samsara@samsara": false,
+    "skill-creator@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true,
+    "wrap-balancer@vanilla-wrap-balancer": false,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": false
+  },
+  "skillOverrides": {
+    "hyperframes": "off",
+    "hyperframes-animation": "off",
+    "hyperframes-cli": "off",
+    "hyperframes-core": "off",
+    "hyperframes-creative": "off",
+    "hyperframes-media": "off",
+    "hyperframes-registry": "off",
+    "media-use": "off",
+    "motion-graphics": "off",
+    "music-to-video": "off",
+    "pr-to-video": "off",
+    "product-launch-video": "off",
+    "project-session-manager": "off",
+    "remotion-to-hyperframes": "off",
+    "sciomc": "off",
+    "slideshow": "off",
+    "talking-head-recut": "off",
+    "website-to-video": "off",
+    "aside-browser": "off",
+    "make-interfaces-feel-better": "off"
+  },
+  "deniedMcpServers": [
+    { "serverName": "n8n-dev" },
+    { "serverName": "n8n-prod" }
+  ]
+}
