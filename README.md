@@ -64,7 +64,7 @@ claude --mode
 
 ```bash
 type claude    # bash
-whence -v cc   # zsh
+whence -v claude   # zsh
 ```
 
 ### 지우기
@@ -112,9 +112,7 @@ fi
 
 `source $ZSH/oh-my-zsh.sh` **뒤에** 두어야 합니다. 앞에 두면 oh-my-zsh 플러그인이 나중에 만드는 `claude` 별칭에 덮어써집니다.
 
-이미 `claude`나 `cc`를 만드는 다른 스크립트를 읽고 있다면 **나중에 읽은 쪽이 이깁니다.** 둘을 같이 쓰지 마세요.
-
-`cc`는 `claude`와 똑같이 동작하는 짧은 이름입니다. `claude`만 쓰고 싶으면 읽어 들인 다음 `unset -f cc` (bash) 또는 `unfunction cc` (zsh)를 넣으면 됩니다.
+이미 `claude` 함수나 별칭을 만드는 다른 스크립트를 읽고 있다면 **나중에 읽은 쪽이 이깁니다.** 둘을 같이 쓰지 마세요.
 
 ### 적용
 
@@ -129,7 +127,6 @@ claude --mode                        모드 목록
 claude --mode default                default 설정으로 실행
 claude --mode research --resume      모드 + Claude Code 옵션
 claude --mode=ui                     등호 형태
-cc --mode slide                      claude와 동일
 claude --mode-help                   래퍼 사용법
 claude --mode-version                래퍼 버전과 설치 정보
 claude --mode-update                 최신 릴리스로 업데이트
