@@ -2,7 +2,7 @@
 
 ![claude-mode](assets/cover.jpg)
 
-Claude Code를 감싸서 `claude --mode <name>`을 쓸 수 있게 만드는 셸 함수입니다. **bash와 zsh를 모두 지원합니다.**
+Claude Code를 감싸서 `claude --mode <name>`을 쓸 수 있게 만드는 래퍼입니다. **bash, zsh, PowerShell, CMD를 지원합니다.**
 
 `--mode`를 붙이면 `settings/settings.<name>.json`을 그 세션에만 `--settings` 옵션으로 넘깁니다. 원래 설정 파일인 `~/.claude/settings.json`은 건드리지 않습니다.
 
@@ -12,6 +12,7 @@ Claude Code를 감싸서 `claude --mode <name>`을 쓸 수 있게 만드는 셸 
 |----|------|
 | zsh | `claude-mode.zsh` |
 | bash | `claude-mode.bash` |
+| PowerShell / CMD | `claude-mode.ps1` + `bin/claude.cmd` |
 
 ## 지원 플랫폼
 
@@ -20,23 +21,103 @@ Claude Code를 감싸서 `claude --mode <name>`을 쓸 수 있게 만드는 셸 
 | macOS | ✅ 지원 | Intel / Apple Silicon |
 | Linux | ✅ 지원 | apt / dnf / pacman 계열에서 의존성 설치 안내 |
 | WSL (WSL2 포함) | ✅ 지원 | 리눅스와 동일하게 동작 |
-| Windows (PowerShell / CMD) | 🚧 지원 예정 | 아직 동작하지 않습니다 |
-
-bash / zsh 함수로 만들어져 있어서 PowerShell과 CMD에서는 쓸 수 없습니다. Windows에서는 WSL 안에서 설치해 주세요. PowerShell 지원은 준비 중입니다.
+| Windows (PowerShell / CMD) | ✅ 지원 | Windows PowerShell 5.1 이상 |
 
 ## 설치 방법
+
+먼저 [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)를 설치해 `claude` 명령을 사용할 수 있어야 합니다. 아래에서 현재 사용하는 운영체제와 터미널에 맞는 명령 하나만 실행하세요.
+
+### macOS / Linux / WSL
+
+bash 또는 zsh 터미널에서 실행합니다.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Mineru98/claude-mode/refs/heads/main/install.sh | sh
 ```
 
-어느 셸에서나 도는 `sh` 스크립트라서 oh-my-zsh를 안 써도 되고 zsh를 안 써도 됩니다. 하는 일은 이렇습니다.
+필요한 도구는 `jq`, `git` 또는 `curl`, 그리고 `bash` 또는 `zsh`입니다. 설치기는 저장소를 `~/.claude-mode`에 받고 현재 사용하는 셸의 `~/.bashrc` 또는 `~/.zshrc`에 로드 구간을 추가합니다. 처음 수정할 때는 `<rc 파일>.claude-mode.bak` 백업도 만듭니다.
+
+설치가 끝나면 새 터미널을 열거나 현재 셸에 맞는 설정 파일을 다시 읽습니다.
+
+```bash
+source ~/.bashrc  # bash
+source ~/.zshrc   # zsh
+```
+
+### Windows PowerShell
+
+Windows PowerShell 5.1 이상에서 다음 명령을 실행합니다. `git`이 PATH에 있어야 하며 관리자 권한은 필요하지 않습니다.
+
+```powershell
+irm https://raw.githubusercontent.com/Mineru98/claude-mode/refs/heads/main/install.ps1 | iex
+```
+
+설치기는 저장소를 `%USERPROFILE%\.claude-mode`에 받고 `%USERPROFILE%\.claude-mode\bin`을 사용자 PATH에 추가합니다. 설치가 끝나면 PowerShell 창을 닫고 새로 열어야 `claude` 명령에 변경된 PATH가 적용됩니다.
+
+실행 정책 때문에 명령이 차단된다면 현재 프로세스에만 우회 정책을 적용한 뒤 다시 설치합니다.
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+irm https://raw.githubusercontent.com/Mineru98/claude-mode/refs/heads/main/install.ps1 | iex
+```
+
+### Windows CMD
+
+명령 프롬프트에서 다음 한 줄을 그대로 실행합니다. `curl.exe`, `git`, Windows PowerShell이 PATH에 있어야 하며 관리자 권한은 필요하지 않습니다.
+
+```bat
+curl -fsSL https://raw.githubusercontent.com/Mineru98/claude-mode/refs/heads/main/install.cmd -o install.cmd && install.cmd && del install.cmd
+```
+
+설치가 끝나면 CMD 창을 닫고 새로 여세요. 첫 번째 `curl`은 설치 파일을 내려받고, `install.cmd`는 PowerShell 설치기를 실행하며, 마지막 `del`은 내려받은 임시 설치 파일을 삭제합니다.
+
+> Windows 설치기는 설치 전에 PATH에 있던 원본 Claude Code 실행 파일을 기록합니다. 따라서 설치 전에 새 PowerShell 또는 CMD에서 `claude --version`이 정상적으로 실행되는지 먼저 확인하세요.
+
+### 설치 확인
+
+새 터미널에서 다음 명령을 실행합니다.
+
+```text
+claude --mode
+```
+
+`backend`, `default`, `frontend` 등의 모드 목록이 출력되면 설치가 완료된 것입니다. 원하는 모드는 다음처럼 실행합니다.
+
+```text
+claude --mode frontend
+```
+
+문제가 있으면 원본 Claude Code와 claude-mode 경로를 확인합니다.
+
+```bash
+command -v claude  # macOS / Linux / WSL
+```
+
+```powershell
+Get-Command claude  # PowerShell
+```
+
+```bat
+where claude
+```
+
+### 다시 설치하거나 업데이트
+
+사용 중인 환경의 설치 명령을 다시 실행하면 같은 설치 경로에서 최신 버전으로 갱신됩니다. bash/zsh 설정 구간이나 Windows PATH 항목은 중복해서 추가되지 않습니다.
+
+### 설치기가 하는 일
+
+macOS, Linux, WSL에서는 다음 작업을 수행합니다.
 
 1. `jq` / `git` 또는 `curl` / `bash` 또는 `zsh`가 있는지 확인합니다. 없으면 OS에 맞는 설치 명령을 알려주고 멈춥니다. `claude`가 없으면 경고만 하고 계속합니다.
 2. 저장소를 `~/.claude-mode`로 받습니다. `git`이 없으면 압축 파일을 내려받아 풉니다. 이미 있으면 그 자리에서 업데이트합니다.
 3. 쓰는 셸에 맞춰 `~/.zshrc` / `~/.bashrc` 끝에 claude-mode 전용 구간을 넣습니다. 이 두 파일은 터미널을 열 때마다 자동으로 읽히는 설정 파일인데, 아래에서는 줄여서 **rc 파일**이라고 부릅니다. 처음 넣을 때 `<rc>.claude-mode.bak` 백업을 남깁니다.
 
-같은 명령을 다시 돌리면 최신으로 업데이트하고 그 구간을 갱신합니다. 여러 번 돌려도 중복해서 쌓이지 않습니다.
+Windows에서는 다음 작업을 수행합니다.
+
+1. PATH에서 `claude`와 `git`을 확인합니다.
+2. 저장소를 `%USERPROFILE%\.claude-mode`로 clone하거나 기존 설치를 업데이트합니다.
+3. 원본 Claude Code 실행 경로를 기록하고 Windows용 래퍼가 있는 `bin` 디렉터리를 사용자 PATH에 추가합니다.
 
 ### 설치 옵션
 
@@ -61,36 +142,36 @@ curl -fsSL .../install.sh | CLAUDE_MODE_SHELL=both sh
 | `CLAUDE_MODE_REPO` | GitHub 저장소 | 다른 fork를 쓸 때 |
 | `CLAUDE_MODE_SLUG` | `Mineru98/claude-mode` | tarball과 버전 확인에 쓰는 `owner/repo` |
 
+Windows에서도 `CLAUDE_MODE_HOME`, `CLAUDE_MODE_REF`, `CLAUDE_MODE_REPO`, `CLAUDE_MODE_SLUG`를 같은 뜻으로 사용할 수 있습니다.
+
+```powershell
+$env:CLAUDE_MODE_HOME = 'D:\tools\claude-mode'
+irm https://raw.githubusercontent.com/Mineru98/claude-mode/refs/heads/main/install.ps1 | iex
+```
+
 `auto`는 지금 쓰는 셸(`$SHELL`)을 먼저 봅니다. 다른 셸의 rc 파일이 이미 있으면 거기도 같이 넣습니다. macOS에서 `~/.bash_profile`이 `~/.bashrc`를 안 읽고 있으면 `~/.bash_profile`에도 넣습니다.
 
-### 설치 확인
-
-```bash
-claude --mode
-```
-
-모드 목록이 뜨면 설치가 끝났습니다. 안 뜨면 새 터미널 탭을 열어보세요.
-
-`claude`가 함수가 아니라 실행 파일로 잡히면 rc 파일의 claude-mode 구간이 아직 안 읽힌 것입니다.
-
-```bash
-type claude    # bash
-whence -v claude   # zsh
-```
+`CLAUDE_MODE_SHELL`은 macOS, Linux, WSL 설치기에만 적용됩니다. Windows 설치기는 PowerShell과 CMD가 함께 사용하는 `bin` 디렉터리를 PATH에 등록합니다.
 
 ### 지우기
 
-rc 파일에서 `# >>> claude-mode >>>`부터 `# <<< claude-mode <<<`까지를 지우고, 설치 경로를 삭제합니다.
+macOS, Linux, WSL에서는 rc 파일의 `# >>> claude-mode >>>`부터 `# <<< claude-mode <<<`까지를 지우고 설치 경로를 삭제합니다.
 
 ```bash
 rm -rf ~/.claude-mode
 ```
 
+Windows에서는 사용자 PATH에서 `%USERPROFILE%\.claude-mode\bin`을 제거한 뒤 설치 폴더를 삭제합니다.
+
+```powershell
+Remove-Item -Recurse -Force "$HOME\.claude-mode"
+```
+
 ## 필요 조건
 
-- bash 또는 zsh
+- bash, zsh, PowerShell 또는 CMD
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude` 명령을 터미널에서 바로 쓸 수 있어야 함)
-- [jq](https://jqlang.github.io/jq/) — JSON을 다루는 도구입니다. 모드 파일과 `settings.local.json`을 합칠 때 씁니다.
+- [jq](https://jqlang.github.io/jq/) — bash/zsh 래퍼가 모드 파일과 `settings.local.json`을 합칠 때 씁니다. Windows 네이티브 래퍼에는 필요하지 않습니다.
 - 설치 스크립트를 쓴다면 `git` 또는 `curl`
 
 확인:
