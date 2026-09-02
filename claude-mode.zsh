@@ -8,6 +8,8 @@
 #
 # claude --mode                        List wrapper modes (settings/settings.<name>.json)
 # claude --mode default|research|...   Load that mode via claude --settings
+# claude --mode-version                Print claude-mode version / install info
+# claude --mode-help                   Print wrapper usage
 
 _CLAUDE_MODE_HOME="${${(%):-%x}:A:h}"
 
@@ -17,6 +19,58 @@ _cc_settings_dir() {
 
 _cc_mode_settings_file() {
   print -r -- "$(_cc_settings_dir)/settings.${1}.json"
+}
+
+_cc_install_info() {
+  local key="$1" file="${_CLAUDE_MODE_HOME}/.install-info"
+  [[ -f "$file" ]] || return 1
+  local line
+  line="$(grep -m1 "^${key}=" "$file" 2>/dev/null)" || return 1
+  print -r -- "${line#*=}"
+}
+
+_cc_print_version() {
+  emulate -L zsh
+  local ver='' ref='' commit='' date='' origin=''
+
+  if [[ -f "${_CLAUDE_MODE_HOME}/VERSION" ]]; then
+    ver="$(<"${_CLAUDE_MODE_HOME}/VERSION")"
+    ver="${ver//[$'\n\r ']/}"
+  fi
+  [[ -n "$ver" ]] || ver='unknown'
+
+  if [[ -d "${_CLAUDE_MODE_HOME}/.git" ]] && (( ${+commands[git]} )); then
+    commit="$(git -C "$_CLAUDE_MODE_HOME" rev-parse --short HEAD 2>/dev/null)"
+    ref="$(git -C "$_CLAUDE_MODE_HOME" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    [[ "$ref" == HEAD ]] && ref="$(_cc_install_info ref)"
+    date="$(git -C "$_CLAUDE_MODE_HOME" log -1 --format=%cs 2>/dev/null)"
+    [[ -n "$date" ]] || date="$(_cc_install_info date)"
+    origin='git'
+  else
+    commit="$(_cc_install_info commit)"
+    ref="$(_cc_install_info ref)"
+    date="$(_cc_install_info date)"
+    origin="$(_cc_install_info method)"
+  fi
+
+  local detail="${ref:-?}"
+  [[ -n "$commit" ]] && detail+=" @ ${commit}"
+  [[ -n "$date" ]] && detail+=", ${date}"
+  print -r -- "claude-mode ${ver} (${detail})"
+  print -r -- "  home   ${_CLAUDE_MODE_HOME}"
+  print -r -- "  shell  zsh (claude-mode.zsh)"
+  [[ -n "$origin" ]] && print -r -- "  origin ${origin}"
+  return 0
+}
+
+_cc_print_help() {
+  local usage="${_CLAUDE_MODE_HOME}/share/usage.txt"
+  if [[ -f "$usage" ]]; then
+    cat "$usage"
+  else
+    print -ru2 "cc: 도움말 파일이 없습니다: ${usage}"
+    return 1
+  fi
 }
 
 _cc_list_modes() {
@@ -178,6 +232,14 @@ _cc_inject_mode_settings() {
 cc() {
   local _cc_mode=""
   local -a _cc_applied_args=()
+
+  # 래퍼 전용 플래그. 맨 앞에 올 때만 잡는다.
+  # 뒤쪽까지 훑으면 `claude -p --mode-version` 처럼 다른 옵션의 값으로 온 것까지
+  # 가로채게 된다. 이 둘은 단독으로 쓰는 정보성 플래그라 첫 인자로 충분하다.
+  case "${1-}" in
+    --mode-version) _cc_print_version; return ;;
+    --mode-help)    _cc_print_help;    return ;;
+  esac
 
   _cc_extract_mode "$@" || return
   set -- "${_cc_applied_args[@]}"

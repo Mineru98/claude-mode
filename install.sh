@@ -115,6 +115,26 @@ fi
 [ -f "$DEST/claude-mode.bash" ] || die "설치가 이상합니다: $DEST/claude-mode.bash 없음"
 [ -d "$DEST/settings" ]         || die "설치가 이상합니다: $DEST/settings 없음"
 
+# 설치 시점 정보를 남긴다. tarball 설치는 .git 이 없어서 이 파일이 유일한 출처다.
+# claude --mode-version 이 읽는다.
+write_install_info() {
+  _commit='-'
+  _method='tarball'
+  if [ -d "$DEST/.git" ] && have git; then
+    _commit="$(git -C "$DEST" rev-parse --short HEAD 2>/dev/null || echo -)"
+    _method='git'
+  fi
+  {
+    printf 'ref=%s\n' "$REF"
+    printf 'commit=%s\n' "$_commit"
+    printf 'date=%s\n' "$(date -u '+%Y-%m-%d')"
+    printf 'method=%s\n' "$_method"
+    printf 'repo=%s\n' "$REPO"
+  } 2>/dev/null > "$DEST/.install-info" || warn "설치 정보를 못 남겼습니다: $DEST/.install-info"
+}
+
+write_install_info
+
 modes=$(ls "$DEST"/settings/settings.*.json 2>/dev/null \
   | sed 's|.*/settings\.||; s|\.json$||' | tr '\n' ' ')
 

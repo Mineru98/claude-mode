@@ -129,11 +129,40 @@ claude --mode default                default 설정으로 실행
 claude --mode research --resume      모드 + Claude Code 옵션
 claude --mode=ui                     등호 형태
 cc --mode slide                      claude와 동일
+claude --mode-help                   래퍼 사용법
+claude --mode-version                래퍼 버전과 설치 정보
 ```
 
-`--mode`는 래퍼가 직접 처리하고 Claude Code로 넘기지 않습니다. 나머지 옵션은 그대로 Claude Code로 넘어갑니다. `--mode`가 없으면 아무것도 손대지 않고 원래 `claude` 명령을 그대로 실행합니다.
+`--mode`, `--mode-help`, `--mode-version`은 래퍼가 직접 처리하고 Claude Code로 넘기지 않습니다. 나머지 옵션은 그대로 Claude Code로 넘어갑니다. `--mode`가 없으면 아무것도 손대지 않고 원래 `claude` 명령을 그대로 실행합니다.
 
 명령에 `--settings`를 이미 직접 붙였으면 모드 파일은 건너뜁니다. `settings/mcp.<name>.json`이 있으면 `--mcp-config`로 함께 붙이고, `--mcp-config`도 직접 붙였으면 마찬가지로 건너뜁니다.
+
+### 버전과 도움말
+
+래퍼 전용 플래그를 따로 뒀습니다. `claude --version`과 `claude --help`는 예전 그대로 Claude Code 본체에게 넘어가기 때문에, 그 출력을 파싱하는 스크립트가 있어도 깨지지 않습니다.
+
+```bash
+claude --mode-version
+```
+
+```text
+claude-mode 0.1.0 (main @ f897bc7, 2026-09-02)
+  home   /Users/you/.claude-mode
+  shell  zsh (claude-mode.zsh)
+  origin git
+```
+
+버전은 저장소의 `VERSION` 파일에서 읽습니다. 커밋과 날짜는 `.git`이 있으면 거기서, tarball로 받았으면 `install.sh`가 설치할 때 남긴 `$CLAUDE_MODE_HOME/.install-info`에서 읽습니다. `home`과 `shell`은 여러 번 설치해서 경로가 섞였을 때 지금 어느 파일이 도는지 확인하는 용도입니다.
+
+`claude --mode-help`는 `share/usage.txt`를 그대로 보여줍니다. bash와 zsh가 같은 파일을 읽어서 두 쪽 문구가 갈라지지 않습니다.
+
+이 두 플래그는 **첫 인자로 올 때만** 래퍼가 처리합니다. 뒤쪽 인자까지 훑으면 `claude -p --mode-version`처럼 다른 옵션의 값으로 온 문자열까지 가로채게 되기 때문입니다. 단독으로 쓰는 정보성 플래그라 이걸로 충분합니다.
+
+```bash
+claude --mode-version      # 래퍼가 처리
+claude -p --mode-version   # -p 의 값으로 Claude Code에 그대로 전달
+claude -- --mode-version   # 마찬가지로 그대로 전달
+```
 
 ## 모드 파일이 하는 일
 

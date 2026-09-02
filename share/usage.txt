@@ -1,0 +1,19 @@
+사용법: claude --mode <name> [claude 옵션...]
+
+  claude --mode                모드 목록을 봅니다
+  claude --mode <name>         settings/settings.<name>.json 을 --settings 로 넘겨 실행합니다
+                               settings/mcp.<name>.json 이 있으면 --mcp-config 로 함께 넘깁니다
+  claude --mode-version        claude-mode 버전과 설치 정보를 봅니다
+  claude --mode-help           이 도움말을 봅니다
+
+  --mode-version 과 --mode-help 는 첫 인자로 올 때만 래퍼가 처리합니다.
+  --mode 를 뺀 나머지 인자는 그대로 claude 에게 전달됩니다.
+  claude 자체 도움말은 claude --help, 버전은 claude --version 입니다.
+
+예시
+  claude --mode backend
+  claude --mode research --resume
+  claude --mode=review -p "이 diff 를 봐줘"
+
+설정 파일은 CLAUDE_MODE_HOME/settings/ 에 있습니다.
+새 모드는 settings.<name>.json 을 하나 더 만들면 바로 잡힙니다.

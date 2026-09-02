@@ -9,6 +9,8 @@
 #
 # claude --mode                        List wrapper modes (settings/settings.<name>.json)
 # claude --mode default|research|...   Load that mode via claude --settings
+# claude --mode-version                Print claude-mode version / install info
+# claude --mode-help                   Print wrapper usage
 
 _CLAUDE_MODE_HOME="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 
@@ -18,6 +20,57 @@ _cc_settings_dir() {
 
 _cc_mode_settings_file() {
   printf '%s\n' "$(_cc_settings_dir)/settings.${1}.json"
+}
+
+_cc_install_info() {
+  local key="$1" file="${_CLAUDE_MODE_HOME}/.install-info" line
+  [ -f "$file" ] || return 1
+  line="$(grep -m1 "^${key}=" "$file" 2>/dev/null)" || return 1
+  [ -n "$line" ] || return 1
+  printf '%s\n' "${line#*=}"
+}
+
+_cc_print_version() {
+  local ver='' ref='' commit='' date='' origin='' detail=''
+
+  # `< file` 가 먼저 평가되므로 2>/dev/null 을 뒤에 두면 늦는다. 아예 있는지 보고 연다.
+  if [ -f "${_CLAUDE_MODE_HOME}/VERSION" ]; then
+    ver="$(tr -d '\n\r ' < "${_CLAUDE_MODE_HOME}/VERSION" 2>/dev/null)"
+  fi
+  [ -n "$ver" ] || ver='unknown'
+
+  if [ -d "${_CLAUDE_MODE_HOME}/.git" ] && command -v git >/dev/null 2>&1; then
+    commit="$(git -C "$_CLAUDE_MODE_HOME" rev-parse --short HEAD 2>/dev/null)"
+    ref="$(git -C "$_CLAUDE_MODE_HOME" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    [ "$ref" = "HEAD" ] && ref="$(_cc_install_info ref)"
+    date="$(git -C "$_CLAUDE_MODE_HOME" log -1 --format=%cs 2>/dev/null)"
+    [ -n "$date" ] || date="$(_cc_install_info date)"
+    origin='git'
+  else
+    commit="$(_cc_install_info commit)"
+    ref="$(_cc_install_info ref)"
+    date="$(_cc_install_info date)"
+    origin="$(_cc_install_info method)"
+  fi
+
+  detail="${ref:-?}"
+  [ -n "$commit" ] && detail="${detail} @ ${commit}"
+  [ -n "$date" ] && detail="${detail}, ${date}"
+  printf '%s\n' "claude-mode ${ver} (${detail})"
+  printf '%s\n' "  home   ${_CLAUDE_MODE_HOME}"
+  printf '%s\n' "  shell  bash (claude-mode.bash)"
+  [ -n "$origin" ] && printf '%s\n' "  origin ${origin}"
+  return 0
+}
+
+_cc_print_help() {
+  local usage="${_CLAUDE_MODE_HOME}/share/usage.txt"
+  if [ -f "$usage" ]; then
+    cat "$usage"
+  else
+    printf '%s\n' "cc: 도움말 파일이 없습니다: ${usage}" >&2
+    return 1
+  fi
 }
 
 _cc_list_modes() {
@@ -179,6 +232,14 @@ _cc_inject_mode_settings() {
 cc() {
   local _cc_mode=""
   local -a _cc_applied_args=()
+
+  # 래퍼 전용 플래그. 맨 앞에 올 때만 잡는다.
+  # 뒤쪽까지 훑으면 `claude -p --mode-version` 처럼 다른 옵션의 값으로 온 것까지
+  # 가로채게 된다. 이 둘은 단독으로 쓰는 정보성 플래그라 첫 인자로 충분하다.
+  case "${1-}" in
+    --mode-version) _cc_print_version; return ;;
+    --mode-help)    _cc_print_help;    return ;;
+  esac
 
   _cc_extract_mode "$@" || return
   set -- ${_cc_applied_args[@]+"${_cc_applied_args[@]}"}
